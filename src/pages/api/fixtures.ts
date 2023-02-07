@@ -64,20 +64,24 @@ export default async function handler(
     })
   );
 
-  const fulfilledFixtures = fixturePromises.filter(
-    (f): f is PromiseFulfilledResult<AxiosResponse<Fixture>> =>
-      f.status === "fulfilled"
-  );
+  const fulfilledFixtures = fixturePromises
+    .filter(
+      (f): f is PromiseFulfilledResult<AxiosResponse<Fixture>> =>
+        f.status === "fulfilled"
+    )
+    .map((f) => f.value);
 
   const errors = fulfilledFixtures
-    .map((f) => f.value.data.errors)
+    .map((fixtureRes) => fixtureRes.data.errors)
     .filter((e) => Object.values(e).length > 0);
 
   if (errors.length > 0) {
     return res.status(500).json({ message: errors });
   }
 
-  const fixtures = fulfilledFixtures.flatMap((f) => f.value.data.response);
+  const fixtures = fulfilledFixtures.flatMap(
+    (fixtureRes) => fixtureRes.data.response
+  );
 
   res.status(200).json(fixtures);
 }
