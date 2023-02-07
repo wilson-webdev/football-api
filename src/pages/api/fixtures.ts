@@ -18,7 +18,7 @@ export default async function handler(
   const apiKey = req.headers["x-rapidapi-key"];
 
   if (!apiKey) {
-    res.status(401).json({ errors: "Please provide x-rapidapi-key" });
+    return res.status(401).json({ errors: "Please provide x-rapidapi-key" });
   }
 
   if (typeof leagues !== "string") {
