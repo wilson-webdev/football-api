@@ -15,6 +15,11 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const { leagues, ...restQuery } = req.query;
+  const apiKey = req.headers["x-rapidapi-key"];
+
+  if (!apiKey) {
+    res.status(401).json({ errors: "Please provide x-rapidapi-key" });
+  }
 
   if (typeof leagues !== "string") {
     return res
@@ -51,7 +56,7 @@ export default async function handler(
             ...restQuery,
           },
           headers: {
-            "X-RapidAPI-Key": req.headers["x-rapidapi-key"],
+            "X-RapidAPI-Key": apiKey,
             "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com",
           },
         }
