@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
+import { getRapidApiHeaders } from "@/utils/get-rapid-api-headers";
+import { getRapidApiKey } from "@/utils/get-rapid-api-key";
+import { Headers } from "@/types/rapid-api";
+import { axios } from "@/utils/axios";
 
 type Fixture = {
   get: "fixtures";
@@ -10,57 +14,47 @@ type Fixture = {
   response: any;
 };
 
+const listFormat = new Intl.ListFormat("en");
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const { leagues, ...restQuery } = req.query;
-  const apiKey = req.headers["x-rapidapi-key"];
+  const apiKey = getRapidApiKey(req);
 
   if (!apiKey) {
-    return res.status(401).json({ errors: "Please provide x-rapidapi-key" });
+    return res.status(401).json({ errors: `Please provide ${Headers.apiKey}` });
   }
 
-  if (typeof leagues !== "string") {
+  if (typeof leagues !== "string" || leagues.length === 0) {
     return res
       .status(400)
       .json({ errors: "Please provide a list of league IDs" });
   }
 
   const leagueIds = leagues.split(",");
-  const invalidIds = leagueIds
-    .map((leagueId) => {
-      const n = Number(leagueId);
 
-      if (Number.isNaN(n)) {
-        return leagueId;
-      }
-
-      return false;
-    })
-    .filter(Boolean);
+  const invalidIds = leagueIds.filter((leagueId) => {
+    const leagueIdAsNumber = Number(leagueId);
+    return !Number.isInteger(leagueIdAsNumber);
+  });
 
   if (invalidIds.length > 0) {
     return res
       .status(400)
-      .json({ errors: `Invalid league IDs: ${invalidIds.join(", ")}` });
+      .json({ errors: `Invalid league IDs: ${listFormat.format(invalidIds)}` });
   }
 
   const fixturePromises = await Promise.allSettled(
     leagueIds.map((leagueId) => {
-      return axios.get<Fixture>(
-        "https://api-football-v1.p.rapidapi.com/v3/fixtures",
-        {
-          params: {
-            league: leagueId,
-            ...restQuery,
-          },
-          headers: {
-            "X-RapidAPI-Key": apiKey,
-            "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com",
-          },
-        }
-      );
+      return axios.get<Fixture>("/fixtures", {
+        params: {
+          league: leagueId,
+          ...restQuery,
+        },
+        headers: getRapidApiHeaders(apiKey),
+      });
     })
   );
 
@@ -76,7 +70,7 @@ export default async function handler(
     .filter((e) => Object.values(e).length > 0);
 
   if (errors.length > 0) {
-    return res.status(500).json({ message: errors });
+    return res.status(500).json({ errors });
   }
 
   const fixtures = fulfilledFixtures.flatMap(
