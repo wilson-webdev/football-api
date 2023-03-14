@@ -98,13 +98,6 @@ export default async function handler(
     })
   );
 
-  await requests.insertOne({
-    url: req.url,
-    token: apiKey,
-    date: new Date().toISOString(),
-    requestsMade: leagueIds.length,
-  });
-
   const fulfilledFixtures = fixturePromises
     .filter(
       (f): f is PromiseFulfilledResult<AxiosResponse<Fixture>> =>
@@ -119,6 +112,19 @@ export default async function handler(
   if (errors.length > 0) {
     return res.status(500).json({ errors });
   }
+
+  const contentSizeMb = fulfilledFixtures.reduce(
+    (acc, curr) => acc + (Number(curr.headers["content-length"]) || 0),
+    0
+  );
+
+  await requests.insertOne({
+    url: req.url,
+    token: apiKey,
+    date: new Date().toISOString(),
+    requestsMade: leagueIds.length,
+    contentSizeKb: contentSizeMb / 1024,
+  });
 
   const fixtures = fulfilledFixtures.flatMap(
     (fixtureRes) => fixtureRes.data.response
