@@ -2,13 +2,14 @@ import express from "express";
 import bodyParser from "body-parser";
 import "dotenv/config";
 import { fixturesRouter } from "./routes/fixtures.route";
+import { HealthCheckService } from "./services/health-check.service";
 
 const app = express();
 
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
-  res.json({ success: true });
+  res.json(HealthCheckService.get());
 });
 
 app.use("/fixtures", fixturesRouter);
