@@ -1,6 +1,6 @@
-import { Headers } from "@/types/rapid-api";
-import { NextApiRequest } from "next";
+import { Headers } from "../types/rapid-api";
+import { Request } from "express";
 
-export function getRapidApiKey(req: NextApiRequest) {
-  return req.headers[Headers.apiKey] as string;
+export function getRapidApiKey(req: Request) {
+  return req.headers[Headers.apiKey] as string | null;
 }
