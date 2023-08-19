@@ -1,4 +1,4 @@
-import { Headers } from "@/types/rapid-api";
+import { Headers } from "../types/rapid-api";
 import ax from "axios";
 
 export const axios = ax.create({
