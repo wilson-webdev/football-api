@@ -33,7 +33,7 @@ type GetResult =
 
 export class FixturesService {
   public static async get({
-    leagueIds,
+    leagueIds: leagueIdsArray,
     apiKey,
     url,
     query,
@@ -41,6 +41,7 @@ export class FixturesService {
     const client = await clientPromise;
     const db = client.db("quota");
     const requests = await db.collection("requests");
+    const leagueIds = new Set(leagueIdsArray);
 
     const date = new Date();
 
@@ -70,15 +71,15 @@ export class FixturesService {
 
     const total = (await sumOfRequests.toArray())?.[0]?.total || 0;
 
-    if (total + leagueIds.length > MAX_REQUESTS_ALLOWED) {
+    if (total + leagueIds.size > MAX_REQUESTS_ALLOWED) {
       return {
         code: 429,
-        errors: `Too many requests. Currently used ${total} requests out of ${MAX_REQUESTS_ALLOWED} and you are about to make ${leagueIds.length} requests`,
+        errors: `Too many requests. Currently used ${total} requests out of ${MAX_REQUESTS_ALLOWED} and you are about to make ${leagueIds.size} requests`,
       };
     }
 
     const fixturePromises = await Promise.allSettled(
-      leagueIds.map((leagueId) => {
+      [...leagueIds].map((leagueId) => {
         return axios.get<Fixture>("/fixtures", {
           params: {
             league: leagueId,
@@ -116,7 +117,7 @@ export class FixturesService {
       url,
       token: apiKey,
       date: new Date().toISOString(),
-      requestsMade: leagueIds.length,
+      requestsMade: leagueIds.size,
       contentSizeKb: contentSizeMb / 1024,
     });
 
