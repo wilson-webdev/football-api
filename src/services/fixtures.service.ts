@@ -41,42 +41,7 @@ export class FixturesService {
     const client = await clientPromise;
     const db = client.db("quota");
     const requests = await db.collection("requests");
-    const leagueIds = new Set(leagueIdsArray);
-
-    const date = new Date();
-
-    // Look back a day from now
-    date.setDate(date.getDate() - 1);
-
-    const sumOfRequests = await requests.aggregate([
-      {
-        $match: {
-          date: {
-            $gte: date.toISOString(),
-          },
-          token: {
-            $eq: apiKey,
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$token",
-          total: {
-            $sum: "$requestsMade",
-          },
-        },
-      },
-    ]);
-
-    const total = (await sumOfRequests.toArray())?.[0]?.total || 0;
-
-    if (total + leagueIds.size > MAX_REQUESTS_ALLOWED) {
-      return {
-        code: 429,
-        errors: `Too many requests. Currently used ${total} requests out of ${MAX_REQUESTS_ALLOWED} and you are about to make ${leagueIds.size} requests`,
-      };
-    }
+    const leagueIds = Array.from(new Set(leagueIdsArray));
 
     const fixturePromises = await Promise.allSettled(
       [...leagueIds].map((leagueId) => {
@@ -117,7 +82,7 @@ export class FixturesService {
       url,
       token: apiKey,
       date: new Date().toISOString(),
-      requestsMade: leagueIds.size,
+      requestsMade: leagueIds.length,
       contentSizeKb: contentSizeMb / 1024,
     });
 
