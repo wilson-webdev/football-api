@@ -3,6 +3,7 @@ import { getRapidApiHeaders } from "../utils/get-rapid-api-headers";
 import { axios } from "../utils/axios";
 import clientPromise from "../lib/mongodb";
 import { Request } from "express";
+import lodash from "lodash";
 
 type Fixture = {
   get: "fixtures";
@@ -20,6 +21,8 @@ type GetParams = {
   apiKey: string;
   url: string;
   query: Request["query"];
+  include?: string[];
+  exclude?: string[];
 };
 
 type GetResult =
@@ -28,15 +31,42 @@ type GetResult =
       code?: number;
     }
   | {
-      data: Fixture[];
+      data: any[];
     };
 
 export class FixturesService {
-  public static async get({
+  private processIncludeExclude(
+    fixtures: any[],
+    include?: string[],
+    exclude?: string[]
+  ) {
+    if (!include && !exclude) {
+      return fixtures;
+    }
+
+    return fixtures.map((fixture) => {
+      const values = {};
+      const includeKeys = include || Object.keys(fixture);
+
+      includeKeys.forEach((key) => {
+        lodash.set(values, key, lodash.get(fixture, key));
+      });
+
+      exclude?.forEach((key) => {
+        lodash.unset(values, key);
+      });
+
+      return values;
+    });
+  }
+
+  async getFixtures({
     leagueIds: leagueIdsArray,
     apiKey,
     url,
     query,
+    include,
+    exclude,
   }: GetParams): Promise<GetResult> {
     const client = await clientPromise;
     const db = client.db("quota");
@@ -86,8 +116,12 @@ export class FixturesService {
       contentSizeKb: contentSizeMb / 1024,
     });
 
+    const fixtures = fulfilledFixtures.flatMap(
+      (fixtureRes) => fixtureRes.data.response
+    );
+
     return {
-      data: fulfilledFixtures.flatMap((fixtureRes) => fixtureRes.data.response),
+      data: this.processIncludeExclude(fixtures, include, exclude),
     };
   }
 }
