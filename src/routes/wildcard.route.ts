@@ -12,11 +12,35 @@ wildcardRouter.all("*", async (req, res) => {
     return res.status(401).json({ errors: `Please provide ${Headers.apiKey}` });
   }
 
-  const apiRes = await footballApi.request({
+  const { data, status, headers } = await footballApi.request({
     method: req.method,
     url: req.originalUrl,
     headers: getRapidApiHeaders(apiKey),
   });
 
-  return res.status(apiRes.status).header(apiRes.headers).json(apiRes.data);
+  if (data.errors) {
+    const errors = parseErrors(data.errors);
+    if (errors) {
+      const errorStatus = status >= 200 && status < 300 ? 400 : status;
+      return res.status(errorStatus).json({ errors });
+    }
+  }
+
+  return res.status(status).header(headers).json(data.response);
 });
+
+function parseErrors(errors: unknown) {
+  if (Array.isArray(errors) && errors.length > 0) {
+    return errors;
+  }
+
+  if (typeof errors === "object" && Object.keys(errors || {}).length > 0) {
+    return errors;
+  }
+
+  if (typeof errors === "string" && errors.length > 0) {
+    return errors;
+  }
+
+  return null;
+}
