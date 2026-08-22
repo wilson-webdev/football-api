@@ -1,8 +1,8 @@
-import axios from "axios";
 import express from "express";
 import { getRapidApiHeaders } from "../utils/get-rapid-api-headers";
 import { getRapidApiKey } from "../utils/get-rapid-api-key";
 import { Headers } from "../types/rapid-api";
+import { footballApi } from "src/utils/axios";
 
 export const wildcardRouter = express.Router();
 
@@ -12,7 +12,7 @@ wildcardRouter.all("*", async (req, res) => {
     return res.status(401).json({ errors: `Please provide ${Headers.apiKey}` });
   }
 
-  const apiRes = await axios.request({
+  const apiRes = await footballApi.request({
     method: req.method,
     url: req.originalUrl,
     headers: getRapidApiHeaders(apiKey),

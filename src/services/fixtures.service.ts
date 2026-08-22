@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { getRapidApiHeaders } from "../utils/get-rapid-api-headers";
-import { axios } from "../utils/axios";
+import { footballApi } from "../utils/axios";
 import clientPromise from "../lib/mongodb";
 import { Request } from "express";
 import lodash from "lodash";
@@ -75,7 +75,7 @@ export class FixturesService {
 
     const fixturePromises = await Promise.allSettled(
       [...leagueIds].map((leagueId) => {
-        return axios.get<Fixture>("/fixtures", {
+        return footballApi.get<Fixture>("/fixtures", {
           params: {
             league: leagueId,
             ...query,
