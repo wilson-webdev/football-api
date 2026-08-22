@@ -2,7 +2,7 @@ import express from "express";
 import { getRapidApiHeaders } from "../utils/get-rapid-api-headers";
 import { getRapidApiKey } from "../utils/get-rapid-api-key";
 import { Headers } from "../types/rapid-api";
-import { footballApi } from "src/utils/axios";
+import { footballApi } from "../utils/axios";
 
 export const wildcardRouter = express.Router();
 
