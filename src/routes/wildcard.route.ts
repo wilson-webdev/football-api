@@ -3,6 +3,7 @@ import { getRapidApiHeaders } from "../utils/get-rapid-api-headers";
 import { getRapidApiKey } from "../utils/get-rapid-api-key";
 import { Headers } from "../types/rapid-api";
 import { footballApi } from "../utils/axios";
+import { isAxiosError } from "axios";
 
 export const wildcardRouter = express.Router();
 
@@ -12,21 +13,31 @@ wildcardRouter.all("*", async (req, res) => {
     return res.status(401).json({ errors: `Please provide ${Headers.apiKey}` });
   }
 
-  const { data, status, headers } = await footballApi.request({
-    method: req.method,
-    url: req.originalUrl,
-    headers: getRapidApiHeaders(apiKey),
-  });
+  try {
+    const { data, status, headers } = await footballApi.request({
+      method: req.method,
+      url: req.originalUrl,
+      headers: getRapidApiHeaders(apiKey),
+    });
 
-  if (data.errors) {
-    const errors = parseErrors(data.errors);
-    if (errors) {
-      const errorStatus = status >= 200 && status < 300 ? 400 : status;
-      return res.status(errorStatus).json({ errors });
+    if (data.errors) {
+      const errors = parseErrors(data.errors);
+      if (errors) {
+        const errorStatus = status >= 200 && status < 300 ? 400 : status;
+        return res.status(errorStatus).json({ errors });
+      }
     }
-  }
 
-  return res.status(status).header(headers).json(data.response);
+    return res.status(status).header(headers).json(data.response);
+  } catch (error) {
+    if (isAxiosError(error)) {
+      return res
+        .status(error.response?.status || 500)
+        .json({ errors: error.message });
+    }
+
+    return res.status(500).json({ errors: "Internal server error" });
+  }
 });
 
 function parseErrors(errors: unknown) {
