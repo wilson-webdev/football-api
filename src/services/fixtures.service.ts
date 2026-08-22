@@ -38,7 +38,7 @@ export class FixturesService {
   private processIncludeExclude(
     fixtures: any[],
     include?: string[],
-    exclude?: string[]
+    exclude?: string[],
   ) {
     if (!include && !exclude) {
       return fixtures;
@@ -82,13 +82,13 @@ export class FixturesService {
           },
           headers: getRapidApiHeaders(apiKey),
         });
-      })
+      }),
     );
 
     const fulfilledFixtures = fixturePromises
       .filter(
         (f): f is PromiseFulfilledResult<AxiosResponse<Fixture>> =>
-          f.status === "fulfilled"
+          f.status === "fulfilled",
       )
       .map((f) => f.value);
 
@@ -105,7 +105,7 @@ export class FixturesService {
 
     const contentSizeMb = fulfilledFixtures.reduce(
       (acc, curr) => acc + (Number(curr.headers["content-length"]) || 0),
-      0
+      0,
     );
 
     await requests.insertOne({
@@ -117,7 +117,7 @@ export class FixturesService {
     });
 
     const fixtures = fulfilledFixtures.flatMap(
-      (fixtureRes) => fixtureRes.data.response
+      (fixtureRes) => fixtureRes.data.response,
     );
 
     return {

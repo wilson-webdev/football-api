@@ -1,9 +1,7 @@
 import { Headers } from "../types/rapid-api";
-import { AxiosHeaders } from "axios";
 
-export function getRapidApiHeaders(apiKey: string, headers?: AxiosHeaders) {
+export function getRapidApiHeaders(apiKey: string) {
   return {
     [Headers.apiKey]: apiKey,
-    ...headers,
   };
 }

@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import "dotenv/config";
 import { fixturesRouter } from "./routes/fixtures.route";
 import { HealthCheckService } from "./services/health-check.service";
+import { wildcardRouter } from "./routes/wildcard.route";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/fixtures", fixturesRouter);
+app.use("*", wildcardRouter);
 
 // Start web server on port 3000
 app.listen(3000, () => {
